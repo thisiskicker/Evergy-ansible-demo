@@ -1,0 +1,10 @@
+[Unit]
+Description=vault
+
+[Service]
+User=vault
+Group=vault
+ExecStart=/opt/vault server -config=/etc/vault/config.hcl
+
+[Install]
+WantedBy=multi-user.target

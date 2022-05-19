@@ -1,0 +1,56 @@
+---
+  - name: Install Vault
+    hosts: all
+    vars:
+      - vault_version: 1.10.3
+      - os_name: linux
+      - os_architecture: amd64
+    become: yes
+    become_user: root
+    tasks:
+      - name: Create Vault Group
+        group:
+          name: vault
+          state: present
+      - name: Create Vault User
+        user:
+          name: vault
+          groups: vault
+          state: present
+      # - name: get os_name
+      #   command: uname -s
+      #   register: os_name
+      - name: download vault binary
+        get_url:
+          url: https://releases.hashicorp.com/vault/{{ vault_version }}/vault_{{ vault_version }}_{{ os_name }}_{{ os_architecture }}.zip
+          dest: /tmp/vault.zip
+      - name: install gunzip
+        apt:
+          name: unzip
+          state: present
+      - name: unzip vault binary
+        unarchive:
+          src: /tmp/vault.zip
+          dest: /opt/
+          remote_src: yes
+          owner: vault
+          group: vault
+      - name: copy vault service
+        copy:
+          src: vault.service
+          dest: /etc/systemd/system/vault.service
+          owner: root
+          group: root
+          mode: 0644
+      - name: copy vault config
+        copy:
+          src: config.hcl
+          dest: /etc/vault/
+          owner: vault
+          group: vault
+          mode: 0644
+      - name: Start vault
+        systemd:
+          name: vault
+          state: started
+          enabled: yes
